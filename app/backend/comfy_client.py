@@ -82,3 +82,58 @@ def first_image_artifact(result: dict) -> tuple[str, str]:
         for img in node_out.get("images", []):
             return img["filename"], img.get("subfolder", "")
     raise RuntimeError("El workflow no produjo ninguna imagen")
+
+
+def first_video_artifact(result: dict) -> tuple[str, str]:
+    """Devuelve (filename, subfolder) del primer video del resultado.
+
+    SaveVideo lo reporta bajo "gifs" o bajo "images" según versión.
+    """
+    for node_id, node_out in result.get("outputs", {}).items():
+        for key in ("gifs", "images"):
+            for item in node_out.get(key, []):
+                name = item.get("filename", "")
+                if name.lower().endswith((".mp4", ".webm", ".mov", ".avi", ".mkv")):
+                    return name, item.get("subfolder", "")
+    raise RuntimeError("El workflow no produjo ningún video")
+
+
+def upload_image(path: str, overwrite: bool = True) -> str:
+    """Sube una imagen al input de ComfyUI (/upload/image). Devuelve el filename."""
+    import io
+    import mimetypes
+    import uuid
+    from pathlib import Path
+
+    src = Path(path)
+    if not src.exists():
+        raise RuntimeError(f"imagen local no existe: {path}")
+    boundary = uuid.uuid4().hex
+    body = io.BytesIO()
+    body.write(f"--{boundary}\r\n".encode())
+    body.write(
+        f'Content-Disposition: form-data; name="image"; filename="{src.name}"\r\n'.encode()
+    )
+    ctype = mimetypes.guess_type(src.name)[0] or "application/octet-stream"
+    body.write(f"Content-Type: {ctype}\r\n\r\n".encode())
+    body.write(src.read_bytes())
+    body.write(b"\r\n")
+    body.write(f"--{boundary}\r\n".encode())
+    body.write('Content-Disposition: form-data; name="overwrite"\r\n\r\n'.encode())
+    body.write(str(overwrite).lower().encode())
+    body.write(f"\r\n--{boundary}--\r\n".encode())
+    req = urllib.request.Request(
+        f"{COMFY_HOST}/upload/image",
+        data=body.getvalue(),
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            res = json.loads(r.read().decode())
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"No pude subir la imagen a ComfyUI: {exc}") from exc
+    name = res.get("name")
+    if not name:
+        raise RuntimeError(f"ComfyUI no aceptó la imagen: {str(res)[:200]}")
+    return name

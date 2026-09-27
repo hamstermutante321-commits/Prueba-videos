@@ -76,6 +76,7 @@ class JobType(str, Enum):
     audio = "audio"
     subtitle = "subtitle"
     render = "render"
+    ping = "ping"  # solo test/dev del job system
 
 
 class JobStatus(str, Enum):

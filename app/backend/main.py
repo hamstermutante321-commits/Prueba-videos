@@ -3,11 +3,13 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from routers.ideas import router as ideas_router
+from routers.jobs import router as jobs_router
 from routers.projects import router as projects_router
 
 app = FastAPI(title="StoryForge Local Studio", version="0.2.0")
 app.include_router(projects_router)
 app.include_router(ideas_router)
+app.include_router(jobs_router)
 
 
 class HealthResponse(BaseModel):

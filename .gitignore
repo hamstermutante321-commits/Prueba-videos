@@ -12,6 +12,7 @@ dist-ssr/
 *.local
 
 # Modelos y outputs pesados (no subir a GitHub)
+ComfyUI/
 models/
 outputs/
 temp/

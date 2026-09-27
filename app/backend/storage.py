@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from models import Project, ProjectCreate, ProjectSettings, StoryPlan
+from models import IdeaNode, Project, ProjectCreate, ProjectSettings, StoryPlan
 
 # .../app/backend -> raíz del proyecto (LocalAIStoryPipeline)
 ROOT = Path(__file__).resolve().parents[2]
@@ -77,3 +77,67 @@ def touch_updated(project_id: str) -> None:
     data = _read_json(path)
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
     _write_json(path, data)
+
+
+# --- Árbol de ideas persistente (docs/09_IDEA_EXPANSION_ENGINE.md) ---
+
+def _tree_path(project_id: str) -> Path:
+    return _project_dir(project_id) / "idea_tree.json"
+
+
+def load_tree(project_id: str) -> dict | None:
+    path = _tree_path(project_id)
+    if not path.exists():
+        return None
+    data = _read_json(path)
+    data.setdefault("root_id", None)
+    data.setdefault("nodes", {})
+    data.setdefault("active_node_id", None)
+    data.setdefault("selected_story_node_id", None)
+    return data
+
+
+def save_tree(project_id: str, tree: dict) -> None:
+    _write_json(_tree_path(project_id), tree)
+    touch_updated(project_id)
+
+
+def add_nodes(project_id: str, nodes: list[IdeaNode]) -> None:
+    tree = load_tree(project_id)
+    if tree is None:
+        raise FileNotFoundError("project not found")
+    for node in nodes:
+        tree["nodes"][node.id] = node.model_dump()
+    if tree["root_id"] is None and nodes:
+        tree["root_id"] = nodes[0].id
+    save_tree(project_id, tree)
+
+
+def set_node_status(project_id: str, node_id: str, status: str) -> dict | None:
+    tree = load_tree(project_id)
+    if tree is None or node_id not in tree["nodes"]:
+        return None
+    tree["nodes"][node_id]["status"] = status
+    if status == "active":
+        tree["active_node_id"] = node_id
+    if status == "selected_for_story":
+        tree["selected_story_node_id"] = node_id
+    save_tree(project_id, tree)
+    return tree["nodes"][node_id]
+
+
+def branch_path(project_id: str, node_id: str) -> list[dict] | None:
+    """Camino raíz -> ... -> nodo (para dar contexto al LLM)."""
+    tree = load_tree(project_id)
+    if tree is None or node_id not in tree["nodes"]:
+        return None
+    path: list[dict] = []
+    current: str | None = node_id
+    while current:
+        node = tree["nodes"].get(current)
+        if node is None:
+            break
+        path.append(node)
+        current = node.get("parent_id")
+    path.reverse()
+    return path

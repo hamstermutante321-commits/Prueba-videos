@@ -141,3 +141,24 @@ def branch_path(project_id: str, node_id: str) -> list[dict] | None:
         current = node.get("parent_id")
     path.reverse()
     return path
+
+
+# --- Story plan + escenas (docs/08_PIPELINE_OVERVIEW.md) ---
+
+def save_story_plan(project_id: str, plan: StoryPlan) -> StoryPlan:
+    """Guarda story_plan.json y crea scene-0X/ con los .txt por escena."""
+    pdir = _project_dir(project_id)
+    if not pdir.exists():
+        raise FileNotFoundError("project not found")
+    scenes_dir = pdir / "scenes"
+    for i, scene in enumerate(plan.scenes, start=1):
+        scene.scene_id = f"scene-{i:02d}"
+        scene.order = i
+        sdir = scenes_dir / scene.scene_id
+        sdir.mkdir(parents=True, exist_ok=True)
+        (sdir / "image_prompt.txt").write_text(scene.image_prompt, encoding="utf-8")
+        (sdir / "motion_prompt.txt").write_text(scene.motion_prompt, encoding="utf-8")
+        (sdir / "narration.txt").write_text(scene.narration, encoding="utf-8")
+    _write_json(pdir / "story_plan.json", plan.model_dump())
+    touch_updated(project_id)
+    return plan

@@ -98,3 +98,98 @@ def _as_list(data: dict) -> list[dict]:
     if not norm:
         raise RuntimeError("Ollama devolvió ideas vacías")
     return norm
+
+
+STORY_JSON_SHAPE = (
+    '{"hook": "...", "summary": "...", "cliffhanger": "...", '
+    '"scenes": [{"title": "...", "purpose": "...", "duration_seconds": 8, '
+    '"image_prompt": "...", "motion_prompt": "...", "narration": "...", '
+    '"subtitle_text": "...", "transition_note": "...", "continuity_notes": "..."}]}'
+)
+
+
+def _parse_story(data: dict, scene_count: int) -> dict:
+    scenes = data.get("scenes", [])
+    if not isinstance(scenes, list) or not scenes:
+        raise RuntimeError(f"Ollama no devolvió escenas: {str(data)[:300]}")
+    norm = []
+    for i, item in enumerate(scenes[:scene_count]):
+        if not isinstance(item, dict):
+            continue
+        try:
+            duration = int(item.get("duration_seconds", 8))
+        except (TypeError, ValueError):
+            duration = 8
+        norm.append(
+            {
+                "title": str(item.get("title", f"Escena {i + 1}")).strip()[:200],
+                "purpose": str(item.get("purpose", "")).strip(),
+                "duration_seconds": max(2, min(15, duration)),
+                "image_prompt": str(item.get("image_prompt", "")).strip(),
+                "motion_prompt": str(item.get("motion_prompt", "")).strip(),
+                "narration": str(item.get("narration", "")).strip(),
+                "subtitle_text": str(item.get("subtitle_text", "")).strip(),
+                "transition_note": str(item.get("transition_note", "")).strip(),
+                "continuity_notes": str(item.get("continuity_notes", "")).strip(),
+            }
+        )
+    if not norm:
+        raise RuntimeError("Ollama devolvió escenas vacías")
+    return {
+        "hook": str(data.get("hook", "")).strip(),
+        "summary": str(data.get("summary", "")).strip(),
+        "cliffhanger": str(data.get("cliffhanger", "")).strip(),
+        "scenes": norm,
+    }
+
+
+def _branch_text(branch_path: list[dict]) -> str:
+    return "\n".join(
+        f"Nivel {i}: {n.get('title', '')} — {n.get('summary', '')} "
+        f"(conflicto: {n.get('conflict', '')})"
+        for i, n in enumerate(branch_path)
+    )
+
+
+def generate_story(branch_path: list[dict], scene_count: int, style: str) -> dict:
+    prompt = (
+        "Eres un guionista de mini-historias verticales 9:16 (shorts/reels).\n"
+        "Rama narrativa elegida (raíz -> ... -> nodo final):\n"
+        f"{_branch_text(branch_path)}\n"
+        f"Convierte esta rama en una historia SECUENCIAL de {scene_count} escenas "
+        f"para estilo visual '{style}', con hook fuerte en la escena 1 y "
+        "cliffhanger en la última.\n"
+        "Cada escena necesita: title, purpose, duration_seconds (4-10), "
+        "image_prompt (EN INGLÉS, detallado, vertical 9:16, incluye el estilo), "
+        "motion_prompt (EN INGLÉS, movimiento de cámara/acción sutil), "
+        "narration (ESPAÑOL, 1-2 frases para voz en off), "
+        "subtitle_text (ESPAÑOL, versión corta de la narración), "
+        "transition_note y continuity_notes (personajes, objetos y hechos que "
+        "deben mantenerse entre escenas).\n"
+        "Responde SOLO con este JSON, sin texto extra: " + STORY_JSON_SHAPE
+    )
+    return _parse_story(_call_generate(prompt, temperature=0.7), scene_count)
+
+
+def generate_more_scenes(
+    branch_path: list[dict],
+    existing: list[dict],
+    extra_count: int,
+    style: str,
+) -> dict:
+    existing_text = "\n".join(
+        f"Escena {i + 1}: {s.get('title', '')} — {s.get('purpose', '')}"
+        for i, s in enumerate(existing)
+    )
+    prompt = (
+        "Eres un guionista de mini-historias verticales 9:16.\n"
+        f"Rama narrativa: {_branch_text(branch_path)}\n"
+        "Escenas ya materializadas (NO las repitas, continúa DESPUÉS de la última, "
+        "manteniendo personajes, hechos, tono y conflictos abiertos):\n"
+        f"{existing_text}\n"
+        f"Genera {extra_count} escenas NUEVAS que continúen la historia, estilo "
+        f"'{style}', con el mismo formato de campos que antes "
+        "(image_prompt y motion_prompt EN INGLÉS, narration y subtitle_text EN ESPAÑOL).\n"
+        "Responde SOLO con este JSON, sin texto extra: " + STORY_JSON_SHAPE
+    )
+    return _parse_story(_call_generate(prompt, temperature=0.7), extra_count)

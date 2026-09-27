@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from routers.ideas import router as ideas_router
+from routers.images import router as images_router
 from routers.jobs import router as jobs_router
 from routers.projects import router as projects_router
 from routers.story import router as story_router
@@ -12,6 +13,7 @@ app.include_router(projects_router)
 app.include_router(ideas_router)
 app.include_router(jobs_router)
 app.include_router(story_router)
+app.include_router(images_router)
 
 
 class HealthResponse(BaseModel):

@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Modelos y outputs pesados (no subir a GitHub)
+models/
+outputs/
+temp/
+*.safetensors
+*.bin
+*.ckpt
+*.pt
+*.pth
+*.mp4
+*.wav
+*.png
+!projects/**/*.png
+
+# Logs y proyectos locales
+logs/
+projects/*/
+!projects/*/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
+.env

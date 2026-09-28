@@ -3,3 +3,7 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.4
 python-multipart==0.0.20
 coqui-tts==0.27.5
+torchcodec
+whisperx==3.8.6
+# Nota env: transformers==4.57.6 (5.x rompe coqui-tts), torch 2.14+cu126,
+# NLTK punkt/punkt_tab (datos, se descargan solos con NLTK_ALLOW_PROXIED_URLOPEN=1)

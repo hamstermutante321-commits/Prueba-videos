@@ -104,5 +104,41 @@ export const api = {
     req<StoryPlan>(`/api/projects/${projectId}/story/continue`, {
       method: 'POST',
       body: JSON.stringify({ extra_scenes: extraScenes, style })
-    })
+    }),
+  systemStatus: () => req<Record<string, { ok: boolean; hint?: string }>>('/api/system/status'),
+  genImage: (projectId: string, sceneId: string, prompt: string, preset = 'draft', model = 'sdxl') =>
+    req<{ file: string }>(`/api/projects/${projectId}/scenes/${sceneId}/image`, {
+      method: 'POST',
+      body: JSON.stringify({ prompt, preset, model })
+    }),
+  genVideo: (projectId: string, sceneId: string, motionPrompt: string, preset = 'subtle') =>
+    req<{ file: string; bytes: number }>(`/api/projects/${projectId}/scenes/${sceneId}/video`, {
+      method: 'POST',
+      body: JSON.stringify({ motion_prompt: motionPrompt, preset })
+    }),
+  narrate: (projectId: string, sceneId: string, text: string) =>
+    req<{ ok: boolean }>(`/api/projects/${projectId}/scenes/${sceneId}/narration`, {
+      method: 'POST',
+      body: JSON.stringify({ text, language: 'es' })
+    }),
+  transcribe: (projectId: string, sceneId: string) =>
+    req<{ ok: boolean; words: number }>(`/api/projects/${projectId}/scenes/${sceneId}/subtitles`, {
+      method: 'POST',
+      body: JSON.stringify({ language: 'es' })
+    }),
+  makeAss: (projectId: string, sceneId: string, style = 'classic') =>
+    req<{ ok: boolean; blocks: unknown[] }>(`/api/projects/${projectId}/scenes/${sceneId}/subtitles/ass`, {
+      method: 'POST',
+      body: JSON.stringify({ style })
+    }),
+  render: (projectId: string) =>
+    req<{ ok: boolean; seconds: number }>(`/api/projects/${projectId}/render`, {
+      method: 'POST'
+    }),
+  sceneUrls: (projectId: string, sceneId: string) => ({
+    image: `/api/projects/${projectId}/scenes/${sceneId}/image`,
+    clip: `/api/projects/${projectId}/scenes/${sceneId}/clip`,
+    narration: `/api/projects/${projectId}/scenes/${sceneId}/narration`
+  }),
+  renderUrl: (projectId: string) => `/api/projects/${projectId}/render`
 }

@@ -9,6 +9,7 @@ from routers.projects import router as projects_router
 from routers.render import router as render_router
 from routers.story import router as story_router
 from routers.subs import router as subs_router
+from routers.system import router as system_router
 from routers.videos import router as videos_router
 from routers.voice import router as voice_router
 
@@ -22,6 +23,7 @@ app.include_router(videos_router)
 app.include_router(voice_router)
 app.include_router(subs_router)
 app.include_router(render_router)
+app.include_router(system_router)
 
 
 class HealthResponse(BaseModel):

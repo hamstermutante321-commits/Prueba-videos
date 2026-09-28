@@ -7,6 +7,7 @@ from routers.images import router as images_router
 from routers.jobs import router as jobs_router
 from routers.projects import router as projects_router
 from routers.story import router as story_router
+from routers.subs import router as subs_router
 from routers.videos import router as videos_router
 from routers.voice import router as voice_router
 
@@ -18,6 +19,7 @@ app.include_router(story_router)
 app.include_router(images_router)
 app.include_router(videos_router)
 app.include_router(voice_router)
+app.include_router(subs_router)
 
 
 class HealthResponse(BaseModel):

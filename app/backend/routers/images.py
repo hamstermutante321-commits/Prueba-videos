@@ -3,10 +3,11 @@ import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import comfy_client
-from storage import _project_dir, get_project
+from storage import _project_dir, get_project, mark_scene_media
 from workflows.flux_txt2img import PRESETS as FLUX_PRESETS
 from workflows.flux_txt2img import build_flux_workflow
 from workflows.sdxl_txt2img import PRESETS as SDXL_PRESETS
@@ -74,4 +75,15 @@ def api_generate_image(project_id: str, scene_id: str, payload: ImageRequest) ->
     }
     with open(sdir / "image_meta.json", "w", encoding="utf-8") as fh:
         json.dump(meta, fh, ensure_ascii=False, indent=2)
+    mark_scene_media(
+        project_id, scene_id, "image", image_path=f"scenes/{scene_id}/image.png"
+    )
     return meta
+
+
+@router.get("/{scene_id}/image")
+def api_get_image(project_id: str, scene_id: str) -> FileResponse:
+    img = _project_dir(project_id) / "scenes" / scene_id / "image.png"
+    if not img.exists():
+        raise HTTPException(status_code=404, detail="no hay imagen")
+    return FileResponse(img, media_type="image/png", filename=f"{scene_id}.png")

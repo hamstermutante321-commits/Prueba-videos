@@ -17,8 +17,22 @@ def _project_dir(project_id: str) -> Path:
 
 
 def _write_json(path: Path, data: dict) -> None:
+    """Escritura atómica: tmp + rename (no deja JSON corrupto si se corta)."""
+    import os
+    import tempfile
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(data, ensure_ascii=False, indent=2))
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def _read_json(path: Path) -> dict:
@@ -162,3 +176,33 @@ def save_story_plan(project_id: str, plan: StoryPlan) -> StoryPlan:
     _write_json(pdir / "story_plan.json", plan.model_dump())
     touch_updated(project_id)
     return plan
+
+
+# --- Estado de medios por escena (Phase 18) ---
+
+def mark_scene_media(
+    project_id: str,
+    scene_id: str,
+    key: str,
+    ok: bool = True,
+    **paths: str | None,
+) -> None:
+    """Marca image/video/audio/subtitle como done/error y guarda rutas.
+
+    key: image | video | audio | subtitle. paths: image_path, video_path...
+    """
+    plan = get_story_plan(project_id)
+    if plan is None:
+        return
+    for scene in plan.scenes:
+        if scene.scene_id != scene_id:
+            continue
+        status = scene.status
+        if key in ("image", "video", "audio", "subtitle"):
+            setattr(status, key, "done" if ok else "error")
+        for name, value in paths.items():
+            if hasattr(scene, name):
+                setattr(scene, name, value)
+        break
+    _write_json(_project_dir(project_id) / "story_plan.json", plan.model_dump())
+    touch_updated(project_id)

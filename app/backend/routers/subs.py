@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 import subs
 from captions import STYLES, blocks_to_ass, build_blocks
-from storage import _project_dir, get_project
+from storage import _project_dir, get_project, mark_scene_media
 
 router = APIRouter(prefix="/api/projects/{project_id}/scenes", tags=["subtitles"])
 
@@ -78,4 +78,10 @@ def api_make_ass(project_id: str, scene_id: str, payload: AssRequest) -> dict:
         json.dumps(blocks, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (sdir / "subtitles.ass").write_text(ass, encoding="utf-8")
+    mark_scene_media(
+        project_id,
+        scene_id,
+        "subtitle",
+        subtitle_ass_path=f"scenes/{scene_id}/subtitles.ass",
+    )
     return {"ok": True, "style": payload.style, "blocks": blocks}

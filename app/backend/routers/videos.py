@@ -3,10 +3,11 @@ import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import comfy_client
-from storage import _project_dir, get_project
+from storage import _project_dir, get_project, mark_scene_media
 from workflows.ltx_img2video import PRESETS, build_ltx_workflow
 
 router = APIRouter(prefix="/api/projects/{project_id}/scenes", tags=["video"])
@@ -68,4 +69,15 @@ def api_generate_video(project_id: str, scene_id: str, payload: VideoRequest) ->
     }
     with open(sdir / "video_meta.json", "w", encoding="utf-8") as fh:
         json.dump(meta, fh, ensure_ascii=False, indent=2)
+    mark_scene_media(
+        project_id, scene_id, "video", video_path=f"scenes/{scene_id}/clip.mp4"
+    )
     return meta
+
+
+@router.get("/{scene_id}/clip")
+def api_get_clip(project_id: str, scene_id: str) -> FileResponse:
+    clip = _project_dir(project_id) / "scenes" / scene_id / "clip.mp4"
+    if not clip.exists():
+        raise HTTPException(status_code=404, detail="no hay clip")
+    return FileResponse(clip, media_type="video/mp4", filename=f"{scene_id}.mp4")

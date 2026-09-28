@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import voice
-from storage import _project_dir, get_project
+from storage import _project_dir, get_project, mark_scene_media
 
 router = APIRouter(prefix="/api/projects/{project_id}", tags=["voice"])
 
@@ -93,6 +93,9 @@ def api_narrate(project_id: str, scene_id: str, payload: NarrationRequest) -> di
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     (sdir / "narration.txt").write_text(text, encoding="utf-8")
+    mark_scene_media(
+        project_id, scene_id, "audio", audio_path=f"scenes/{scene_id}/voice.wav"
+    )
     return {"ok": True, "text": text, **info}
 
 

@@ -16,6 +16,8 @@ ComfyUI/
 models/
 outputs/
 temp/
+tools/
+*.dll
 *.safetensors
 *.bin
 *.ckpt

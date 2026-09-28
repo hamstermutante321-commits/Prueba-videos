@@ -8,6 +8,7 @@ from routers.jobs import router as jobs_router
 from routers.projects import router as projects_router
 from routers.story import router as story_router
 from routers.videos import router as videos_router
+from routers.voice import router as voice_router
 
 app = FastAPI(title="StoryForge Local Studio", version="0.2.0")
 app.include_router(projects_router)
@@ -16,6 +17,7 @@ app.include_router(jobs_router)
 app.include_router(story_router)
 app.include_router(images_router)
 app.include_router(videos_router)
+app.include_router(voice_router)
 
 
 class HealthResponse(BaseModel):

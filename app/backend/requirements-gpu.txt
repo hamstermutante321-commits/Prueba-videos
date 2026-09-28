@@ -1,0 +1,7 @@
+# GPU base: instalar SIEMPRE con --index-url de PyTorch ANTES que el resto.
+# Varias libs (coqui-tts, whisperx) pueden reemplazar torch-cu126 por torch-CPU
+# al resolver dependencias. Si CUDA deja de verse, reinstalar este archivo.
+--index-url https://download.pytorch.org/whl/cu126
+torch==2.14.0
+torchvision==0.29.0
+torchaudio==2.11.0

@@ -160,8 +160,12 @@ def generate_story(branch_path: list[dict], scene_count: int, style: str) -> dic
         f"para estilo visual '{style}', con hook fuerte en la escena 1 y "
         "cliffhanger en la última.\n"
         "Cada escena necesita: title, purpose, duration_seconds (4-10), "
-        "image_prompt (EN INGLÉS, detallado, vertical 9:16, incluye el estilo), "
-        "motion_prompt (EN INGLÉS, movimiento de cámara/acción sutil), "
+        "image_prompt (EN INGLÉS, detallado, vertical 9:16, incluye el estilo; "
+        "este prompt DESCRIBE la escena completa), "
+        "motion_prompt (EN INGLÉS: describe SOLO la animación, NO repitas la "
+        "descripción de la imagen; incluye movimiento del sujeto, movimiento "
+        "secundario del entorno, movimiento de cámara y 1 restricción de "
+        "continuidad como 'same face, same clothes, no morphing'), "
         "narration (ESPAÑOL, 1-2 frases para voz en off), "
         "subtitle_text (ESPAÑOL, versión corta de la narración), "
         "transition_note y continuity_notes (personajes, objetos y hechos que "
@@ -189,7 +193,9 @@ def generate_more_scenes(
         f"{existing_text}\n"
         f"Genera {extra_count} escenas NUEVAS que continúen la historia, estilo "
         f"'{style}', con el mismo formato de campos que antes "
-        "(image_prompt y motion_prompt EN INGLÉS, narration y subtitle_text EN ESPAÑOL).\n"
+        "(image_prompt describe la escena EN INGLÉS; motion_prompt describe "
+        "SOLO sujeto + entorno + cámara + continuidad EN INGLÉS, sin repetir "
+        "la imagen; narration y subtitle_text EN ESPAÑOL).\n"
         "Responde SOLO con este JSON, sin texto extra: " + STORY_JSON_SHAPE
     )
     return _parse_story(_call_generate(prompt, temperature=0.7), extra_count)

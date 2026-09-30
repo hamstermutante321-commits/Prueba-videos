@@ -111,11 +111,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ prompt, preset, model })
     }),
-  genVideo: (projectId: string, sceneId: string, motionPrompt: string, preset = 'subtle') =>
-    req<{ file: string; bytes: number }>(`/api/projects/${projectId}/scenes/${sceneId}/video`, {
+  genVideo: (projectId: string, sceneId: string, motionPrompt: string, preset = 'subtle', backend = 'cogvideox_i2v') =>
+    req<{ file: string; bytes: number; backend: string }>(`/api/projects/${projectId}/scenes/${sceneId}/video`, {
       method: 'POST',
-      body: JSON.stringify({ motion_prompt: motionPrompt, preset })
+      body: JSON.stringify({ motion_prompt: motionPrompt, preset, backend })
     }),
+  videoBackends: () => req<{ default: string; backends: { name: string; label: string; role: string; notes: string }[] }>('/api/system/video-backends'),
   narrate: (projectId: string, sceneId: string, text: string) =>
     req<{ ok: boolean }>(`/api/projects/${projectId}/scenes/${sceneId}/narration`, {
       method: 'POST',

@@ -7,6 +7,10 @@ from __future__ import annotations
 import json
 import shutil
 import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+COMFY_MODELS = ROOT / "ComfyUI" / "models"
 
 
 def _http_json(url: str, timeout: int = 10) -> dict | None:
@@ -62,10 +66,31 @@ def check_ffmpeg() -> dict:
     return {"ok": False, "hint": "ffmpeg/ffprobe no están en el PATH."}
 
 
+def check_cogvideox() -> dict:
+    dit = COMFY_MODELS / "diffusion_models" / "CogVideoX_1_0_5b_I2V_bf16.safetensors"
+    vae = COMFY_MODELS / "vae" / "cogvideox_vae_bf16.safetensors"
+    t5 = COMFY_MODELS / "clip" / "text_encoders" / "t5xxl_fp8_e4m3fn.safetensors"
+    t5_alt = COMFY_MODELS / "text_encoders" / "t5xxl_fp8_e4m3fn.safetensors"
+    t5_ok = t5.exists() or t5_alt.exists()
+    missing = [str(p) for p, ok in ((dit, dit.exists()), (vae, vae.exists()), (t5, t5_ok)) if not ok]
+    if missing:
+        return {"ok": False, "hint": f"faltan pesos CogVideoX: {missing}"}
+    return {"ok": True}
+
+
+def check_framepack() -> dict:
+    return {
+        "ok": False,
+        "hint": "FramePack no instalado (requiere ~30 GB en pesos HunyuanVideo). Secundario.",
+    }
+
+
 def full_status() -> dict:
     return {
         "ollama": check_ollama(),
         "comfyui": check_comfy(),
+        "cogvideox_i2v": check_cogvideox(),
+        "framepack": check_framepack(),
         "xtts": check_xtts(),
         "whisperx": check_whisperx(),
         "ffmpeg": check_ffmpeg(),

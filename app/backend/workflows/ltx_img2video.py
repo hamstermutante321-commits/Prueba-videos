@@ -1,5 +1,7 @@
-"""Workflow LTX-Video 2B image-to-video 9:16 (Phase 12).
+"""Workflow LTX-Video 2B image-to-video (DEPRECATED como principal, cambio_IA.md).
 
+Se mantiene funcional como backend alternativo, pero ya no es el default:
+distorsiona y sigue mal los prompts de movimiento. Ver adapters/cogvideox.py.
 Basado en la plantilla oficial "LTXV Image to Video" (Comfy-Org/workflow_templates).
 Pesos: checkpoints/ltx-video-2b-v0.9.5.safetensors + text_encoders/t5xxl_fp16.safetensors.
 """

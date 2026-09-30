@@ -10,6 +10,7 @@ export default function SceneCard({ projectId, scene }: Props) {
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
   const [status, setStatus] = useState<Record<string, string>>(scene.status || {})
+  const [backend, setBackend] = useState('cogvideox_i2v')
   const urls = api.sceneUrls(projectId, scene.scene_id)
 
   async function run(label: string, fn: () => Promise<unknown>, doneKey?: string) {
@@ -65,10 +66,15 @@ export default function SceneCard({ projectId, scene }: Props) {
         </button>
         <button
           disabled={busy !== ''}
-          onClick={() => run('Generando video… (minutos)', () => api.genVideo(projectId, scene.scene_id, scene.motion_prompt), 'video')}
+          onClick={() => run('Generando video… (minutos)', () => api.genVideo(projectId, scene.scene_id, scene.motion_prompt, 'subtle', backend), 'video')}
         >
           🎬 Video
         </button>
+        <select value={backend} onChange={(e) => setBackend(e.target.value)} title="Backend image-to-video">
+          <option value="cogvideox_i2v">CogVideoX-5B (recomendado)</option>
+          <option value="framepack">FramePack (no instalado)</option>
+          <option value="ltx">LTX (deprecated)</option>
+        </select>
         <button
           disabled={busy !== ''}
           onClick={() => run('Narrando…', () => api.narrate(projectId, scene.scene_id, scene.narration), 'audio')}

@@ -111,10 +111,34 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ prompt, preset, model })
     }),
-  genVideo: (projectId: string, sceneId: string, motionPrompt: string, preset = 'subtle', backend = 'cogvideox_i2v') =>
+  genVideo: (
+    projectId: string,
+    sceneId: string,
+    motionPrompt: string,
+    preset = 'subtle',
+    backend = 'wan_i2v',
+    wan?: {
+      mode?: string
+      seconds?: number
+      seed?: number
+      teacache?: number
+      interpolate?: boolean
+      upscaler?: string
+    }
+  ) =>
     req<{ file: string; bytes: number; backend: string }>(`/api/projects/${projectId}/scenes/${sceneId}/video`, {
       method: 'POST',
-      body: JSON.stringify({ motion_prompt: motionPrompt, preset, backend })
+      body: JSON.stringify({
+        motion_prompt: motionPrompt,
+        preset,
+        backend,
+        mode: wan?.mode ?? 'fast',
+        seconds: wan?.seconds ?? 3,
+        seed: wan?.seed,
+        teacache: wan?.teacache ?? -1,
+        interpolate: wan?.interpolate ?? true,
+        upscaler: wan?.upscaler ?? 'anime'
+      })
     }),
   videoBackends: () => req<{ default: string; backends: { name: string; label: string; role: string; notes: string }[] }>('/api/system/video-backends'),
   narrate: (projectId: string, sceneId: string, text: string) =>

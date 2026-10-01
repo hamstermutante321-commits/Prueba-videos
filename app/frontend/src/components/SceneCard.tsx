@@ -10,7 +10,13 @@ export default function SceneCard({ projectId, scene }: Props) {
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
   const [status, setStatus] = useState<Record<string, string>>(scene.status || {})
-  const [backend, setBackend] = useState('cogvideox_i2v')
+  const [backend, setBackend] = useState('wan_i2v')
+  const [mode, setMode] = useState('fast')
+  const [seconds, setSeconds] = useState(3)
+  const [seed, setSeed] = useState('')
+  const [teacache, setTeacache] = useState('default')
+  const [interp, setInterp] = useState(true)
+  const [upscaler, setUpscaler] = useState('anime')
   const urls = api.sceneUrls(projectId, scene.scene_id)
 
   async function run(label: string, fn: () => Promise<unknown>, doneKey?: string) {
@@ -66,15 +72,59 @@ export default function SceneCard({ projectId, scene }: Props) {
         </button>
         <button
           disabled={busy !== ''}
-          onClick={() => run('Generando video… (minutos)', () => api.genVideo(projectId, scene.scene_id, scene.motion_prompt, 'subtle', backend), 'video')}
+          onClick={() =>
+            run('Generando video… (minutos)', () =>
+              api.genVideo(projectId, scene.scene_id, scene.motion_prompt, 'subtle', backend, {
+                mode,
+                seconds,
+                seed: seed === '' ? undefined : Number(seed),
+                teacache: teacache === 'default' ? undefined : teacache === 'off' ? 0 : Number(teacache),
+                interpolate: interp,
+                upscaler
+              }), 'video')
+          }
         >
           🎬 Video
         </button>
         <select value={backend} onChange={(e) => setBackend(e.target.value)} title="Backend image-to-video">
-          <option value="cogvideox_i2v">CogVideoX-5B (recomendado)</option>
+          <option value="wan_i2v">Wan 2.2 (recomendado)</option>
+          <option value="cogvideox_i2v">CogVideoX-5B</option>
           <option value="framepack">FramePack (no instalado)</option>
           <option value="ltx">LTX (deprecated)</option>
         </select>
+        {backend === 'wan_i2v' && (
+          <>
+            <select value={mode} onChange={(e) => setMode(e.target.value)} title="Mode">
+              <option value="fast">FAST</option>
+              <option value="final">FINAL</option>
+            </select>
+            <label title="Duración">
+              <input
+                type="number" min={1} max={6} step={0.5} value={seconds}
+                onChange={(e) => setSeconds(Number(e.target.value))}
+                style={{ width: 52 }} />s
+            </label>
+            <label title="Seed (vacío = aleatorio)">
+              Seed:<input
+                value={seed} onChange={(e) => setSeed(e.target.value)}
+                placeholder="auto" style={{ width: 70 }} />
+            </label>
+            <select value={teacache} onChange={(e) => setTeacache(e.target.value)} title="TeaCache">
+              <option value="default">TeaCache auto</option>
+              <option value="off">TeaCache off</option>
+              <option value="0.2">TeaCache 0.2</option>
+              <option value="0.4">TeaCache 0.4</option>
+            </select>
+            <label title="Frame interpolation (FINAL)">
+              <input type="checkbox" checked={interp} onChange={(e) => setInterp(e.target.checked)} />RIFE
+            </label>
+            <select value={upscaler} onChange={(e) => setUpscaler(e.target.value)} title="Upscaler (FINAL)">
+              <option value="anime">UP: Anime</option>
+              <option value="general">UP: General</option>
+              <option value="none">UP: None</option>
+            </select>
+          </>
+        )}
         <button
           disabled={busy !== ''}
           onClick={() => run('Narrando…', () => api.narrate(projectId, scene.scene_id, scene.narration), 'audio')}

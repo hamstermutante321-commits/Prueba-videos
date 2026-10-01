@@ -7,6 +7,7 @@ import { api, type Project } from './api'
 const NAMES: Record<string, string> = {
   ollama: 'Ollama (ideas)',
   comfyui: 'ComfyUI (imagen/video)',
+  wan_i2v: 'Wan 2.2 (video)',
   cogvideox_i2v: 'CogVideoX-5B (video)',
   framepack: 'FramePack (alt.)',
   xtts: 'XTTS (voz)',

@@ -66,15 +66,25 @@ def check_ffmpeg() -> dict:
     return {"ok": False, "hint": "ffmpeg/ffprobe no están en el PATH."}
 
 
-def check_cogvideox() -> dict:
-    dit = COMFY_MODELS / "diffusion_models" / "CogVideoX_1_0_5b_I2V_bf16.safetensors"
-    vae = COMFY_MODELS / "vae" / "cogvideox_vae_bf16.safetensors"
-    t5 = COMFY_MODELS / "clip" / "text_encoders" / "t5xxl_fp8_e4m3fn.safetensors"
-    t5_alt = COMFY_MODELS / "text_encoders" / "t5xxl_fp8_e4m3fn.safetensors"
-    t5_ok = t5.exists() or t5_alt.exists()
-    missing = [str(p) for p, ok in ((dit, dit.exists()), (vae, vae.exists()), (t5, t5_ok)) if not ok]
+def check_wan() -> dict:
+    files = [
+        COMFY_MODELS / "diffusion_models" / "high_noise_260412"
+        / "wan2.2_i2v_A14b_high_noise_lightx2v_4step_720p_260412-Q4_K_M.gguf",
+        COMFY_MODELS / "diffusion_models" / "low_noise_260412"
+        / "wan2.2_i2v_A14b_low_noise_lightx2v_4step_720p_260412-Q4_K_M.gguf",
+        COMFY_MODELS / "text_encoders" / "umt5-xxl-enc-fp8_e4m3fn.safetensors",
+        COMFY_MODELS / "vae" / "Wan2_1_VAE_bf16.safetensors",
+    ]
+    missing = [p.name for p in files if not p.exists()]
     if missing:
-        return {"ok": False, "hint": f"faltan pesos CogVideoX: {missing}"}
+        return {"ok": False, "hint": f"faltan pesos Wan 2.2: {missing}"}
+    return {"ok": True, "notes": "Q4_K_M + LightX2V 4-step. SageAttention no disponible en este Windows (sdpa)."}
+
+
+def check_cogvideox() -> dict:
+    gguf = list((COMFY_MODELS / "CogVideo").rglob("*I2V*Q4*.safetensors")) if (COMFY_MODELS / "CogVideo").exists() else []
+    if not gguf:
+        return {"ok": False, "hint": "CogVideoX secundario: GGUF no descargado (se auto-descarga al usar)."}
     return {"ok": True}
 
 
@@ -89,6 +99,7 @@ def full_status() -> dict:
     return {
         "ollama": check_ollama(),
         "comfyui": check_comfy(),
+        "wan_i2v": check_wan(),
         "cogvideox_i2v": check_cogvideox(),
         "framepack": check_framepack(),
         "xtts": check_xtts(),
